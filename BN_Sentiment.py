@@ -1,12 +1,16 @@
+import numpy as np
 import pandas as pd
 from textblob import *
 from tkinter import Tk
 from tkinter.filedialog import askopenfilename, asksaveasfilename
+from joblib import delayed, Parallel
+import multiprocessing
+
 
 def main():
     print("Program: Sentiment")
-    print("Release: 1.0")
-    print("Date: 2019-02-05")
+    print("Release: 1.1")
+    print("Date: 2019-02-06")
     print("Author: Brian Neely")
     print()
     print()
@@ -40,22 +44,47 @@ def main():
     # Create Column Header List
     headers = list(data.columns.values)
 
-    #Select Column for Sentiment Analysis
+    # Select Column for Sentiment Analysis
     column = column_selection(headers)
 
     # Create an empty output file
     open(file_out, 'a').close()
 
     # Remove Nan
-    data.dropna(subset=[column],inplace=True)
+    data.dropna(subset=[column], inplace=True)
 
-    print(data[column])
+    # Split data for Parallel Processing
+    data_split = split_data(data)
+
+    # Create sentiment score for Data using parallel processing
+    print("Sentiment score creation...")
+    data_split = Parallel(n_jobs=-1)(delayed(sentiment_calculation)(i, column, par_index, len(data_split))
+                                     for par_index, i in enumerate(data_split))
+    print("Score Calculation Complete!")
+    print()
+
+    # Union split data frames
+    data_out = pd.concat(data_split)
+
+    # Write CSV
+    print("Writing CSV File...")
+    data_out.to_csv(file_out, index=False)
+    print("Wrote CSV File!")
+    print()
+
+    print("Sentiment Analysis Completed on column: [" + column + "]")
+    print("File written to: " + file_out)
+    input("Press Enter to close...")
+
+
+def sentiment_calculation(data, column, par_index, par_len):
     sntmnt = list()
     for index, i in enumerate(data[column]):
         sntmnt.append(TextBlob(i).sentiment.polarity)
     data['Sentiment_' + str(column)] = sntmnt
+    print("Sentiment Calculation Complete on: " + str(par_index) + " out of " + str(par_len) + "!")
+    return data
 
-    data.to_csv('sentiment_out.csv', index=False)
 
 def column_selection(headers):
     while True:
@@ -71,27 +100,47 @@ def column_selection(headers):
             break
     return column
 
+
+def split_data(data):
+    # *****Split data for parallel processing*****
+    print("Calculating Splits...")
+    # Find number of CPUs and multiply by 16 for number of parallel threads
+    num_splits = multiprocessing.cpu_count() * 16
+    # Calculate the split locations
+    split_locations = np.linspace(0, len(data), num_splits)
+    # Rounds up the  split_locations
+    split_locations = np.ceil(split_locations)
+    # Convert split_locations to int for splitting data
+    split_locations = split_locations.astype(int)
+    # Split data for parallel processing
+    data_split = np.split(data, split_locations)
+    print("Splits Calculated!")
+    print()
+    return data_split
+    # *****End Split*****
+
+
 def encoding_selection():
-    basic_encoders = ['utf_8','latin1','utf_16','See All Encoders']
-    advanced_encoders = ['ascii','big5','big5hkscs','cp037','cp424',
-                         'cp437','cp500','cp720','cp737','cp775',
-                         'cp850','cp852','cp855','cp856','cp857',
-                         'cp858','cp860','cp861','cp862','cp863',
-                         'cp864','cp865','cp866','cp869','cp874',
-                         'cp875','cp932','cp949','cp950','cp1006',
-                         'cp1026','cp1140','cp1250','cp1251','cp1252',
-                         'cp1253','cp1254','cp1255','cp1256','cp1257',
-                         'cp1258','euc_jp','euc_jis_2004','euc_jisx0213','euc_kr',
-                         'gb2312','gbk','gb18030','hz','iso2022_jp',
-                         'iso2022_jp_1','iso2022_jp_2','iso2022_jp_2004','iso2022_jp_3','iso2022_jp_ext',
-                         'iso2022_kr','latin_1','iso8859_2','iso8859_3','iso8859_4',
-                         'iso8859_5','iso8859_6','iso8859_7','iso8859_8','iso8859_9',
-                         'iso8859_10','iso8859_11','iso8859_13','iso8859_14','iso8859_15',
-                         'iso8859_16','johab','koi8_r','koi8_u','mac_cyrillic',
-                         'mac_greek','mac_iceland','mac_latin2','mac_roman','mac_turkish',
-                         'ptcp154','shift_jis','shift_jis_2004','shift_jisx0213','utf_32',
-                         'utf_32_be','utf_32_le','utf_16','utf_16_be','utf_16_le',
-                         'utf_7','utf_8','utf_8_sig']
+    basic_encoders = ['utf_8', 'latin1', 'utf_16', 'See All Encoders']
+    advanced_encoders = ['ascii', 'big5', 'big5hkscs', 'cp037', 'cp424',
+                         'cp437', 'cp500', 'cp720', 'cp737', 'cp775',
+                         'cp850', 'cp852', 'cp855', 'cp856', 'cp857',
+                         'cp858', 'cp860', 'cp861', 'cp862', 'cp863',
+                         'cp864', 'cp865', 'cp866', 'cp869', 'cp874',
+                         'cp875', 'cp932', 'cp949', 'cp950', 'cp1006',
+                         'cp1026', 'cp1140', 'cp1250', 'cp1251', 'cp1252',
+                         'cp1253', 'cp1254', 'cp1255', 'cp1256', 'cp1257',
+                         'cp1258', 'euc_jp', 'euc_jis_2004', 'euc_jisx0213', 'euc_kr',
+                         'gb2312', 'gbk', 'gb18030', 'hz', 'iso2022_jp',
+                         'iso2022_jp_1', 'iso2022_jp_2', 'iso2022_jp_2004', 'iso2022_jp_3', 'iso2022_jp_ext',
+                         'iso2022_kr', 'latin_1', 'iso8859_2', 'iso8859_3', 'iso8859_4',
+                         'iso8859_5', 'iso8859_6', 'iso8859_7', 'iso8859_8', 'iso8859_9',
+                         'iso8859_10', 'iso8859_11', 'iso8859_13', 'iso8859_14', 'iso8859_15',
+                         'iso8859_16', 'johab', 'koi8_r', 'koi8_u', 'mac_cyrillic',
+                         'mac_greek', 'mac_iceland', 'mac_latin2', 'mac_roman', 'mac_turkish',
+                         'ptcp154', 'shift_jis', 'shift_jis_2004', 'shift_jisx0213', 'utf_32',
+                         'utf_32_be', 'utf_32_le', 'utf_16', 'utf_16_be', 'utf_16_le',
+                         'utf_7', 'utf_8', 'utf_8_sig']
     while True:
         try:
             print("Select encoder.")
@@ -121,5 +170,6 @@ def encoding_selection():
                 break
     return encoder
 
+
 if __name__ == '__main__':
-	main()
+    main()
