@@ -4,7 +4,7 @@
     <inspection_tool class="PyPackageRequirementsInspection" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="ignoredPackages">
         <value>
-          <list size="84">
+          <list size="85">
             <item index="0" class="java.lang.String" itemvalue="altgraph" />
             <item index="1" class="java.lang.String" itemvalue="traitlets" />
             <item index="2" class="java.lang.String" itemvalue="numba" />
@@ -89,6 +89,7 @@
             <item index="81" class="java.lang.String" itemvalue="colorama" />
             <item index="82" class="java.lang.String" itemvalue="future" />
             <item index="83" class="java.lang.String" itemvalue="pytz" />
+            <item index="84" class="java.lang.String" itemvalue="textblob" />
           </list>
         </value>
       </option>

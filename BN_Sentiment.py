@@ -3,8 +3,8 @@ import pandas as pd
 from textblob import *
 from tkinter import Tk
 from tkinter.filedialog import askopenfilename, asksaveasfilename
-from joblib import delayed, Parallel
-import multiprocessing
+# from joblib import delayed, Parallel
+# import multiprocessing
 
 
 def main():
@@ -58,13 +58,15 @@ def main():
 
     # Create sentiment score for Data using parallel processing
     print("Sentiment score creation...")
-    data_split = Parallel(n_jobs=-1)(delayed(sentiment_calculation)(i, column, par_index, len(data_split))
-                                     for par_index, i in enumerate(data_split))
+    for par_index, i in enumerate(data_split):
+        data_split1 = sentiment_calculation(i, column, par_index, len(data_split) - 1)
+    # data_split1 = Parallel(n_jobs=-1)(delayed(sentiment_calculation)(i, column, par_index, len(data_split))
+    #                                  for par_index, i in enumerate(data_split))
     print("Score Calculation Complete!")
     print()
 
     # Union split data frames
-    data_out = pd.concat(data_split)
+    data_out = pd.concat(data_split1)
 
     # Write CSV
     print("Writing CSV File...")
