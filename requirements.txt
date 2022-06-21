@@ -1,4 +1,4 @@
-numpy==1.16.1
+numpy==1.22.0
 joblib==0.13.2
 pandas==0.24.1
 textblob==0.15.3
